@@ -1,0 +1,17 @@
+{
+  "name": "gestao-financeira",
+  "version": "1.0.0",
+  "description": "Cada lançamento (receita, despesa ou boleto) é um cartão que anda pelas etapas **Pendente → Agendado → Pago**. Ao pagar, o saldo da conta muda dentro de uma transação no SQLite.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "deno": "^2.9.6"
+  }
+}
