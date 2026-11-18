@@ -5,3 +5,5 @@ dist/
 *.db-journal
 .DS_Store
 
+backend/PLANO_TICKET_01.md
+backend/.env

@@ -5,14 +5,20 @@
   "main": "index.js",
   "scripts": {
     "dev": "deno task dev",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prisma:generate": "prisma generate",
+    "prisma:push": "prisma db push"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/node": "^26.6.6",
+    "prisma": "^6.19.3",
     "typescript": "^7.0.2"
   },
   "dependencies": {
-    "deno": "^2.9.6"
+    "@prisma/client": "^6.19.3",
+    "deno": "^2.9.6",
+    "dotenv": "^18.0.10"
   }
 }
