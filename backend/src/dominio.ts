@@ -95,17 +95,12 @@ export class Unica implements Recorrencia {
 }
 export class Semanal implements Recorrencia {
   dataDaParcela(inicial: string, n: number): string {
-    const d = new Date(inicial + 'T00:00:00');
-    d.setDate(d.getDate() + 7 * n);
-    return fmtData(d);
+    return Vencimento.deISO(inicial).adicionarDias(7 * n).formatarISO();
   }
 }
 export class Mensal implements Recorrencia {
-  // Dia 31 em mês curto vira o último dia do mês
   dataDaParcela(inicial: string, n: number): string {
-    const [a, m, dia] = inicial.split('-').map(Number);
-    const total = m - 1 + n, ano = a + Math.floor(total / 12), mes = total % 12;
-    return fmtData(new Date(ano, mes, Math.min(dia, new Date(ano, mes + 1, 0).getDate())));
+    return Vencimento.deISO(inicial).adicionarMeses(n).formatarISO();
   }
 }
 export function criarRecorrencia(tipo: string): Recorrencia {
@@ -248,12 +243,23 @@ export class GestorFinanceiro {
   async resumo(uid: number) {
     const [contas, lancs] = await Promise.all([this.repo.listarContas(uid), this.listar(uid)]);
     const abertos = lancs.filter((l) => l.etapa !== 'pago');
+    const hoje = new Date();
+    const em7Dias = Vencimento.deDate(hoje).adicionarDias(7).formatarISO();
+
+    const saldoTotal = contas.reduce((acc, c) => acc.somar(Dinheiro.deReais(c.saldo)), Dinheiro.ZERO);
+    const aReceber = abertos
+      .filter((l) => l.tipo === 'receita')
+      .reduce((acc, l) => acc.somar(Dinheiro.deReais(l.valor)), Dinheiro.ZERO);
+    const aPagar = abertos
+      .filter((l) => l.tipo !== 'receita')
+      .reduce((acc, l) => acc.somar(Dinheiro.deReais(l.valorAtualizado)), Dinheiro.ZERO);
+
     return {
-      saldoTotal: arred(contas.reduce((s, c) => s + c.saldo, 0)),
-      aReceber: arred(abertos.filter((l) => l.tipo === 'receita').reduce((s, l) => s + l.valor, 0)),
-      aPagar: arred(abertos.filter((l) => l.tipo !== 'receita').reduce((s, l) => s + l.valorAtualizado, 0)),
+      saldoTotal: saldoTotal.emReais(),
+      aReceber: aReceber.emReais(),
+      aPagar: aPagar.emReais(),
       vencidos: abertos.filter((l) => l.vencido).length,
-      vencemEm7Dias: abertos.filter((l) => !l.vencido && l.vencimento <= hojeISO(new Date(Date.now() + 7 * 86_400_000))).length,
+      vencemEm7Dias: abertos.filter((l) => !l.vencido && l.vencimento <= em7Dias).length,
     };
   }
 
