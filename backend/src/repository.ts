@@ -73,7 +73,15 @@ export class PrismaFinanceiroRepository implements FinanceiroRepository {
       where: { usuarioId },
       orderBy: { id: 'asc' },
     });
-    return contas.map((c) => ({ id: c.id, nome: c.nome, saldo: c.saldo }));
+    return contas.map((c) => ({
+      id: c.id,
+      nome: c.nome,
+      saldo: c.saldo,
+      tipo: c.tipo,
+      limiteCredito: c.limiteCredito,
+      taxaCashback: c.taxaCashback,
+      diaAniversario: c.diaAniversario,
+    }));
   }
 
   async criarConta(usuarioId: number, nome: string, saldoInicial: number): Promise<number> {

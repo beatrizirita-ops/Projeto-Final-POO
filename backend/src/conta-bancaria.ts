@@ -1,5 +1,5 @@
 import { Dinheiro } from './dinheiro.ts';
-import type { Lancamento } from './dominio.ts';
+import type { ContaData, Lancamento } from './dominio.ts';
 
 // ===== Classe Abstrata: ContaBancaria (Base da Hierarquia POO) =====
 export abstract class ContaBancaria {
@@ -157,5 +157,34 @@ export class CartaoCredito extends ContaBancaria {
     paraConta.creditar(valorResgatado);
     this.cashbackAcumulado = Dinheiro.ZERO;
     return valorResgatado;
+  }
+}
+
+// ===== Factory Polimórfica de Contas =====
+export function criarContaBancaria(d: ContaData): ContaBancaria {
+  switch (d.tipo) {
+    case 'POUPANCA':
+      return new ContaPoupanca(
+        d.id,
+        d.nome,
+        d.saldo,
+        undefined,
+        d.diaAniversario ?? 15,
+      );
+    case 'CARTAO': {
+      const limite = d.limiteCredito ?? d.saldo;
+      const fatura = Math.max(0, limite - d.saldo);
+      return new CartaoCredito(
+        d.id,
+        d.nome,
+        limite,
+        undefined,
+        d.taxaCashback ?? 0.01,
+        fatura,
+      );
+    }
+    case 'CORRENTE':
+    default:
+      return new ContaCorrente(d.id, d.nome, d.saldo);
   }
 }
