@@ -1,4 +1,5 @@
 export { Dinheiro } from './dinheiro.ts';
+export { Vencimento } from './vencimento.ts';
 
 // ===== Tipos (Aula 8: union types) =====
 export type Tipo = 'receita' | 'despesa' | 'boleto';
