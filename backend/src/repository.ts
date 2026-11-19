@@ -5,7 +5,9 @@ import type { UsuarioData, UsuarioRepository } from './auth.ts';
 
 const COLUNAS = 'l.id, l.conta_id AS contaId, l.tipo, l.descricao, l.valor, l.vencimento, l.etapa, l.categoria, l.valor_pago AS valorPago';
 
-// Repositório de Usuários com Prisma ORM
+// ==========================================
+// 1. Repositório de Usuários com Prisma ORM
+// ==========================================
 export class PrismaUsuarioRepository implements UsuarioRepository {
   async criarUsuario(nome: string, email: string, senhaHash: string): Promise<number> {
     const usuario = await prisma.usuario.create({
@@ -65,7 +67,177 @@ export class PrismaUsuarioRepository implements UsuarioRepository {
   }
 }
 
-// Uma classe SQLite que cumpre os dois contratos (mantida para a transição dos passos)
+// ==========================================
+// 2. Repositório Financeiro com Prisma ORM
+// ==========================================
+export class PrismaFinanceiroRepository implements FinanceiroRepository {
+  async listarContas(usuarioId: number): Promise<ContaData[]> {
+    const contas = await prisma.conta.findMany({
+      where: { usuarioId },
+      orderBy: { id: 'asc' },
+    });
+    return contas.map((c) => ({ id: c.id, nome: c.nome, saldo: c.saldo }));
+  }
+
+  async criarConta(usuarioId: number, nome: string, saldoInicial: number): Promise<number> {
+    const conta = await prisma.conta.create({
+      data: {
+        usuarioId,
+        nome,
+        saldo: saldoInicial,
+      },
+    });
+    return conta.id;
+  }
+
+  async listarLancamentos(usuarioId: number): Promise<LancamentoData[]> {
+    const lancamentos = await prisma.lancamento.findMany({
+      where: {
+        conta: {
+          usuarioId,
+        },
+      },
+      orderBy: [{ vencimento: 'asc' }, { id: 'asc' }],
+    });
+
+    return lancamentos.map((l) => ({
+      id: l.id,
+      contaId: l.contaId,
+      tipo: l.tipo as LancamentoData['tipo'],
+      descricao: l.descricao,
+      valor: l.valor,
+      vencimento: l.vencimento,
+      etapa: l.etapa as Etapa,
+      categoria: l.categoria as LancamentoData['categoria'],
+      valorPago: l.valorPago,
+    }));
+  }
+
+  async buscarLancamento(id: number, usuarioId: number): Promise<LancamentoData | undefined> {
+    const l = await prisma.lancamento.findFirst({
+      where: {
+        id,
+        conta: {
+          usuarioId,
+        },
+      },
+    });
+    if (!l) return undefined;
+    return {
+      id: l.id,
+      contaId: l.contaId,
+      tipo: l.tipo as LancamentoData['tipo'],
+      descricao: l.descricao,
+      valor: l.valor,
+      vencimento: l.vencimento,
+      etapa: l.etapa as Etapa,
+      categoria: l.categoria as LancamentoData['categoria'],
+      valorPago: l.valorPago,
+    };
+  }
+
+  async criarLancamento(d: Omit<LancamentoData, 'id'>): Promise<number> {
+    const l = await prisma.lancamento.create({
+      data: {
+        contaId: d.contaId,
+        tipo: d.tipo,
+        descricao: d.descricao,
+        valor: d.valor,
+        vencimento: d.vencimento,
+        etapa: d.etapa,
+        categoria: d.categoria,
+        valorPago: d.valorPago,
+      },
+    });
+    return l.id;
+  }
+
+  async moverEtapa(id: number, etapa: Etapa): Promise<void> {
+    await prisma.lancamento.update({
+      where: { id },
+      data: { etapa },
+    });
+  }
+
+  // Transação Atômica com Prisma: saldo e etapa são atualizados juntos
+  async efetivarPagamento(lancamentoId: number, contaId: number, novoSaldo: number, valorPago: number): Promise<void> {
+    await prisma.$transaction([
+      prisma.conta.update({
+        where: { id: contaId },
+        data: { saldo: novoSaldo },
+      }),
+      prisma.lancamento.update({
+        where: { id: lancamentoId },
+        data: { etapa: 'pago', valorPago },
+      }),
+    ]);
+  }
+
+  async atualizarLancamento(
+    id: number,
+    d: Pick<LancamentoData, 'contaId' | 'tipo' | 'descricao' | 'valor' | 'vencimento' | 'categoria'>,
+  ): Promise<void> {
+    await prisma.lancamento.updateMany({
+      where: { id, etapa: { not: 'pago' } },
+      data: {
+        contaId: d.contaId,
+        tipo: d.tipo,
+        descricao: d.descricao,
+        valor: d.valor,
+        vencimento: d.vencimento,
+        categoria: d.categoria,
+      },
+    });
+  }
+
+  async listarOrcamentos(usuarioId: number): Promise<OrcamentoData[]> {
+    const orcamentos = await prisma.orcamento.findMany({
+      where: { usuarioId },
+    });
+    return orcamentos.map((o) => ({ categoria: o.categoria, limite: o.limite }));
+  }
+
+  async definirOrcamento(usuarioId: number, categoria: string, limite: number): Promise<void> {
+    if (limite === 0) {
+      await prisma.orcamento.deleteMany({
+        where: { usuarioId, categoria },
+      });
+      return;
+    }
+
+    await prisma.orcamento.upsert({
+      where: {
+        usuarioId_categoria: {
+          usuarioId,
+          categoria,
+        },
+      },
+      create: {
+        usuarioId,
+        categoria,
+        limite,
+      },
+      update: {
+        limite,
+      },
+    });
+  }
+
+  async removerLancamento(id: number, usuarioId: number): Promise<void> {
+    await prisma.lancamento.deleteMany({
+      where: {
+        id,
+        conta: {
+          usuarioId,
+        },
+      },
+    });
+  }
+}
+
+// ==========================================
+// 3. Classe SQLite Legada (para compatibilidade temporária)
+// ==========================================
 export class SqliteRepository implements FinanceiroRepository, UsuarioRepository {
   private readonly db: DatabaseSync;
 
