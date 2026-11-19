@@ -1,7 +1,7 @@
 # Ticket 01: Modelagem e Integração do ORM Prisma
 
 - **Tipo**: `wayfinder:task`
-- **Status**: Aberto (Fronteira)
+- **Status**: [CONCLUÍDO]
 - **Bloqueado por**: Nenhum
 
 ---
@@ -33,7 +33,7 @@ Substituir o acesso a dados manual com strings SQL diretas e `node:sqlite` pelo 
 ---
 
 ## 🏁 Critério de Aceite
-- [ ] Schema do Prisma criado e refletindo todas as entidades.
-- [ ] Código compilando com TypeScript e Deno sem erros de sintaxe SQL manual.
-- [ ] Operações de cadastro, login, contas e lançamentos funcionando através do Prisma Client.
+- [x] Schema do Prisma criado e refletindo todas as entidades.
+- [x] Código compilando com TypeScript e Deno sem erros de sintaxe SQL manual.
+- [x] Operações de cadastro, login, contas e lançamentos funcionando através do Prisma Client.
 
