@@ -1,3 +1,5 @@
+export { Dinheiro } from './dinheiro.ts';
+
 // ===== Tipos (Aula 8: union types) =====
 export type Tipo = 'receita' | 'despesa' | 'boleto';
 export type Etapa = 'pendente' | 'agendado' | 'pago'; // colunas do kanban
