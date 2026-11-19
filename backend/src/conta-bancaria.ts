@@ -55,3 +55,107 @@ export class ContaCorrente extends ContaBancaria {
     }
   }
 }
+
+// ===== Subclasse: ContaPoupanca =====
+export class ContaPoupanca extends ContaBancaria {
+  private readonly diaAniversario: number;
+  private readonly taxaRendimento: number;
+
+  constructor(
+    id: number,
+    nome: string,
+    saldoInicial: number | Dinheiro,
+    usuarioId?: number,
+    diaAniversario = 15,
+    taxaRendimento = 0.005, // 0,5% ao mês
+  ) {
+    super(id, nome, saldoInicial, usuarioId);
+    this.diaAniversario = diaAniversario;
+    this.taxaRendimento = taxaRendimento;
+  }
+
+  aplicar(lancamento: Lancamento, dataOperacao: Date): void {
+    const efeito = lancamento.efeitoNoSaldo(dataOperacao);
+    if (efeito.ehNegativo()) {
+      this.debitar(Dinheiro.ZERO.subtrair(efeito));
+    } else {
+      this.creditar(efeito);
+    }
+  }
+
+  render(dataAtual: Date): Dinheiro {
+    if (dataAtual.getDate() !== this.diaAniversario || this.saldo.ehNegativo() || this.saldo.ehZero()) {
+      return Dinheiro.ZERO;
+    }
+    const rendimento = this.saldo.multiplicar(this.taxaRendimento);
+    this.creditar(rendimento);
+    return rendimento;
+  }
+}
+
+// ===== Subclasse: CartaoCredito =====
+export class CartaoCredito extends ContaBancaria {
+  private readonly limite: Dinheiro;
+  private faturaAtual: Dinheiro;
+  private cashbackAcumulado: Dinheiro;
+  private readonly taxaCashback: number;
+
+  constructor(
+    id: number,
+    nome: string,
+    limite: number | Dinheiro,
+    usuarioId?: number,
+    taxaCashback = 0.01, // 1% de cashback
+    faturaInicial: number | Dinheiro = 0,
+    cashbackInicial: number | Dinheiro = 0,
+  ) {
+    const lim = limite instanceof Dinheiro ? limite : Dinheiro.deReais(limite);
+    const fat = faturaInicial instanceof Dinheiro ? faturaInicial : Dinheiro.deReais(faturaInicial);
+    super(id, nome, lim.subtrair(fat), usuarioId);
+    this.limite = lim;
+    this.faturaAtual = fat;
+    this.cashbackAcumulado = cashbackInicial instanceof Dinheiro ? cashbackInicial : Dinheiro.deReais(cashbackInicial);
+    this.taxaCashback = taxaCashback;
+  }
+
+  getLimite(): Dinheiro {
+    return this.limite;
+  }
+
+  getFaturaAtual(): Dinheiro {
+    return this.faturaAtual;
+  }
+
+  getCashbackAcumulado(): Dinheiro {
+    return this.cashbackAcumulado;
+  }
+
+  aplicar(lancamento: Lancamento, dataOperacao: Date): void {
+    const efeito = lancamento.efeitoNoSaldo(dataOperacao);
+    if (efeito.ehNegativo()) {
+      const valorCompra = Dinheiro.ZERO.subtrair(efeito);
+      const novaFatura = this.faturaAtual.somar(valorCompra);
+      if (novaFatura.maiorQue(this.limite)) {
+        throw new Error(`Limite insuficiente no cartão ${this.nome}.`);
+      }
+      this.faturaAtual = novaFatura;
+      const cashback = valorCompra.multiplicar(this.taxaCashback);
+      this.cashbackAcumulado = this.cashbackAcumulado.somar(cashback);
+      this.saldo = this.limite.subtrair(this.faturaAtual);
+    } else {
+      const novaFatura = this.faturaAtual.subtrair(efeito);
+      this.faturaAtual = novaFatura.ehNegativo() ? Dinheiro.ZERO : novaFatura;
+      this.saldo = this.limite.subtrair(this.faturaAtual);
+    }
+  }
+
+  resgatarCashback(paraConta: ContaBancaria): Dinheiro {
+    if (this.cashbackAcumulado.ehZero()) {
+      return Dinheiro.ZERO;
+    }
+    const valorResgatado = this.cashbackAcumulado;
+    paraConta.creditar(valorResgatado);
+    this.cashbackAcumulado = Dinheiro.ZERO;
+    return valorResgatado;
+  }
+}
