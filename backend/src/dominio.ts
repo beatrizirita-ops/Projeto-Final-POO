@@ -1,3 +1,9 @@
+export { Dinheiro } from './dinheiro.ts';
+export { Vencimento } from './vencimento.ts';
+
+import { Dinheiro } from './dinheiro.ts';
+import { Vencimento } from './vencimento.ts';
+
 // ===== Tipos (Aula 8: union types) =====
 export type Tipo = 'receita' | 'despesa' | 'boleto';
 export type Etapa = 'pendente' | 'agendado' | 'pago'; // colunas do kanban
@@ -9,48 +15,73 @@ export type Categoria = typeof CATEGORIAS[number];
 export interface Lancamento {
   readonly tipo: Tipo;
   readonly descricao: string;
-  readonly valor: number;
-  readonly vencimento: string; // yyyy-mm-dd
-  valorAtualizado(hoje: Date): number; // cada tipo calcula do seu jeito
-  efeitoNoSaldo(hoje: Date): number;   // + entra dinheiro, - sai dinheiro
+  readonly valor: Dinheiro;
+  readonly vencimento: Vencimento;
+  valorAtualizado(hoje: Date): Dinheiro; // cada tipo calcula do seu jeito
+  efeitoNoSaldo(hoje: Date): Dinheiro;   // + entra dinheiro, - sai dinheiro
 }
 
 export class Receita implements Lancamento {
   readonly tipo = 'receita';
-  constructor(public readonly descricao: string, public readonly valor: number, public readonly vencimento: string) {}
-  valorAtualizado(): number { return this.valor; }
-  efeitoNoSaldo(): number { return this.valor; }
+  constructor(
+    public readonly descricao: string,
+    public readonly valor: Dinheiro,
+    public readonly vencimento: Vencimento,
+  ) {}
+  valorAtualizado(): Dinheiro { return this.valor; }
+  efeitoNoSaldo(): Dinheiro { return this.valor; }
 }
 
 export class Despesa implements Lancamento {
   readonly tipo = 'despesa';
-  constructor(public readonly descricao: string, public readonly valor: number, public readonly vencimento: string) {}
-  valorAtualizado(): number { return this.valor; }
-  efeitoNoSaldo(): number { return -this.valor; }
+  constructor(
+    public readonly descricao: string,
+    public readonly valor: Dinheiro,
+    public readonly vencimento: Vencimento,
+  ) {}
+  valorAtualizado(): Dinheiro { return this.valor; }
+  efeitoNoSaldo(): Dinheiro { return Dinheiro.ZERO.subtrair(this.valor); }
 }
 
 // Boleto vencido paga multa de 2% + juros de 0,033% ao dia
 export class Boleto implements Lancamento {
   readonly tipo = 'boleto';
-  constructor(public readonly descricao: string, public readonly valor: number, public readonly vencimento: string) {}
-  valorAtualizado(hoje: Date): number {
-    const venc = new Date(this.vencimento + 'T00:00:00').getTime();
-    const dias = Math.max(0, Math.floor((hoje.getTime() - venc) / 86_400_000));
+  constructor(
+    public readonly descricao: string,
+    public readonly valor: Dinheiro,
+    public readonly vencimento: Vencimento,
+  ) {}
+
+  valorAtualizado(hoje: Date): Dinheiro {
+    const dias = this.vencimento.diasAte(hoje);
     if (dias === 0) return this.valor;
-    return Math.round(this.valor * (1 + 0.02 + 0.00033 * dias) * 100) / 100;
+    const fatorMultaEJuros = 1 + 0.02 + 0.00033 * dias;
+    return this.valor.multiplicar(fatorMultaEJuros);
   }
-  efeitoNoSaldo(hoje: Date): number { return -this.valorAtualizado(hoje); }
+
+  efeitoNoSaldo(hoje: Date): Dinheiro {
+    return Dinheiro.ZERO.subtrair(this.valorAtualizado(hoje));
+  }
 }
 
 // Valida os dados e escolhe a classe certa (regra de negócio no domínio)
-export function criarLancamento(tipo: Tipo, descricao: string, valor: number, vencimento: string): Lancamento {
+export function criarLancamento(
+  tipo: Tipo,
+  descricao: string,
+  valor: number | Dinheiro,
+  vencimento: string | Vencimento,
+): Lancamento {
   if (!descricao.trim()) throw new Error('Informe a descrição.');
-  if (!Number.isFinite(valor) || valor <= 0) throw new Error('O valor deve ser maior que zero.');
-  if (Number.isNaN(new Date(vencimento + 'T00:00:00').getTime())) throw new Error('Data de vencimento inválida.');
+
+  const vlr = valor instanceof Dinheiro ? valor : Dinheiro.deReais(valor);
+  if (vlr.ehNegativo() || vlr.ehZero()) throw new Error('O valor deve ser maior que zero.');
+
+  const venc = vencimento instanceof Vencimento ? vencimento : Vencimento.deISO(vencimento);
+
   switch (tipo) {
-    case 'receita': return new Receita(descricao.trim(), valor, vencimento);
-    case 'despesa': return new Despesa(descricao.trim(), valor, vencimento);
-    case 'boleto': return new Boleto(descricao.trim(), valor, vencimento);
+    case 'receita': return new Receita(descricao.trim(), vlr, venc);
+    case 'despesa': return new Despesa(descricao.trim(), vlr, venc);
+    case 'boleto': return new Boleto(descricao.trim(), vlr, venc);
     default: throw new Error('Tipo inválido.');
   }
 }
@@ -64,17 +95,12 @@ export class Unica implements Recorrencia {
 }
 export class Semanal implements Recorrencia {
   dataDaParcela(inicial: string, n: number): string {
-    const d = new Date(inicial + 'T00:00:00');
-    d.setDate(d.getDate() + 7 * n);
-    return fmtData(d);
+    return Vencimento.deISO(inicial).adicionarDias(7 * n).formatarISO();
   }
 }
 export class Mensal implements Recorrencia {
-  // Dia 31 em mês curto vira o último dia do mês
   dataDaParcela(inicial: string, n: number): string {
-    const [a, m, dia] = inicial.split('-').map(Number);
-    const total = m - 1 + n, ano = a + Math.floor(total / 12), mes = total % 12;
-    return fmtData(new Date(ano, mes, Math.min(dia, new Date(ano, mes + 1, 0).getDate())));
+    return Vencimento.deISO(inicial).adicionarMeses(n).formatarISO();
   }
 }
 export function criarRecorrencia(tipo: string): Recorrencia {
@@ -85,14 +111,33 @@ export function criarRecorrencia(tipo: string): Recorrencia {
   }
 }
 
-// ===== Encapsulamento (Aula 3): o saldo só muda por aplicar() =====
+// ===== Encapsulamento (Aula 3): o saldo só muda por aplicar() e é protegido por Dinheiro =====
 export class Conta {
-  constructor(public readonly id: number, public readonly nome: string, private saldo: number) {}
-  getSaldo(): number { return Math.round(this.saldo * 100) / 100; }
+  private saldo: Dinheiro;
+
+  constructor(
+    public readonly id: number,
+    public readonly nome: string,
+    saldoInicial: number | Dinheiro,
+  ) {
+    this.saldo = saldoInicial instanceof Dinheiro ? saldoInicial : Dinheiro.deReais(saldoInicial);
+  }
+
+  getSaldo(): number {
+    return this.saldo.emReais();
+  }
+
+  getSaldoDinheiro(): Dinheiro {
+    return this.saldo;
+  }
+
   aplicar(lancamento: Lancamento, hoje: Date): void {
     const efeito = lancamento.efeitoNoSaldo(hoje);
-    if (this.saldo + efeito < 0) throw new Error(`Saldo insuficiente na conta ${this.nome}.`);
-    this.saldo += efeito;
+    const novoSaldo = this.saldo.somar(efeito);
+    if (novoSaldo.ehNegativo()) {
+      throw new Error(`Saldo insuficiente na conta ${this.nome}.`);
+    }
+    this.saldo = novoSaldo;
   }
 }
 
@@ -133,7 +178,11 @@ export class GestorFinanceiro {
     const hoje = new Date();
     return (await this.repo.listarLancamentos(uid)).map((d) => {
       const obj = criarLancamento(d.tipo, d.descricao, d.valor, d.vencimento);
-      return { ...d, valorAtualizado: d.valorPago ?? obj.valorAtualizado(hoje), vencido: d.etapa !== 'pago' && d.vencimento < hojeISO(hoje) };
+      return {
+        ...d,
+        valorAtualizado: d.valorPago ?? obj.valorAtualizado(hoje).emReais(),
+        vencido: d.etapa !== 'pago' && obj.vencimento.estaVencido(hoje),
+      };
     });
   }
 
@@ -188,18 +237,29 @@ export class GestorFinanceiro {
     const agora = new Date();
     const lanc = criarLancamento(d.tipo, d.descricao, d.valor, d.vencimento);
     conta.aplicar(lanc, agora);
-    await this.repo.efetivarPagamento(id, conta.id, conta.getSaldo(), lanc.valorAtualizado(agora));
+    await this.repo.efetivarPagamento(id, conta.id, conta.getSaldo(), lanc.valorAtualizado(agora).emReais());
   }
 
   async resumo(uid: number) {
     const [contas, lancs] = await Promise.all([this.repo.listarContas(uid), this.listar(uid)]);
     const abertos = lancs.filter((l) => l.etapa !== 'pago');
+    const hoje = new Date();
+    const em7Dias = Vencimento.deDate(hoje).adicionarDias(7).formatarISO();
+
+    const saldoTotal = contas.reduce((acc, c) => acc.somar(Dinheiro.deReais(c.saldo)), Dinheiro.ZERO);
+    const aReceber = abertos
+      .filter((l) => l.tipo === 'receita')
+      .reduce((acc, l) => acc.somar(Dinheiro.deReais(l.valor)), Dinheiro.ZERO);
+    const aPagar = abertos
+      .filter((l) => l.tipo !== 'receita')
+      .reduce((acc, l) => acc.somar(Dinheiro.deReais(l.valorAtualizado)), Dinheiro.ZERO);
+
     return {
-      saldoTotal: arred(contas.reduce((s, c) => s + c.saldo, 0)),
-      aReceber: arred(abertos.filter((l) => l.tipo === 'receita').reduce((s, l) => s + l.valor, 0)),
-      aPagar: arred(abertos.filter((l) => l.tipo !== 'receita').reduce((s, l) => s + l.valorAtualizado, 0)),
+      saldoTotal: saldoTotal.emReais(),
+      aReceber: aReceber.emReais(),
+      aPagar: aPagar.emReais(),
       vencidos: abertos.filter((l) => l.vencido).length,
-      vencemEm7Dias: abertos.filter((l) => !l.vencido && l.vencimento <= hojeISO(new Date(Date.now() + 7 * 86_400_000))).length,
+      vencemEm7Dias: abertos.filter((l) => !l.vencido && l.vencimento <= em7Dias).length,
     };
   }
 

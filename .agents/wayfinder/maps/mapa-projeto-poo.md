@@ -17,14 +17,13 @@ Transformar o backend do projeto Caixa em uma referência didática completa dos
 - [x] **Escopo de Contas**: Cartão de Crédito com cashback e Conta Poupança com rendimento no dia 15.
 - [x] **Escopo de Padrões**: Padrões GoF avançados (como Observer) foram descartados para manter alinhamento com a ementa atual da disciplina.
 - [x] **Ticket 01 Concluído**: Integração do Prisma ORM com SQLite, schemas de Usuário, Sessão, Conta, Lançamento e Orçamento, e repositórios desacoplados (`PrismaUsuarioRepository` e `PrismaFinanceiroRepository`).
+- [x] **Ticket 02 Concluído**: Encapsulamento com Value Objects imutáveis (`Dinheiro` em centavos e `Vencimento` com datas seguras) aplicado em `Lancamento`, `Conta` e `GestorFinanceiro`.
 
 ## Frontier (Abertos e Disponíveis para Execução)
-- [x] [Ticket 01: Modelagem e Integração do ORM Prisma](tickets/ticket-01-integracao-prisma-orm.md) — *Concluído com sucesso.*
-- [ ] [Ticket 02: Encapsulamento com Value Objects (Dinheiro e Vencimento)](tickets/ticket-02-value-objects-encapsulamento.md) — Tipos de valor imutáveis e proteção contra valores inválidos.
+- [ ] [Ticket 03: Herança e Polimorfismo nas Contas Bancárias](tickets/ticket-03-hierarquia-contas-polimorfismo.md) — Especialização de `ContaCorrente`, `CartaoCredito` com cashback e `ContaPoupanca` com rendimento.
+- [ ] [Ticket 04: Abstração e Polimorfismo para Exportadores de Relatório](tickets/ticket-04-interfaces-exportadores.md) — Interfaces de exportação (CSV, JSON).
 
 ## Blocked (Aguardando dependências da fronteira)
-- [ ] [Ticket 03: Herança e Polimorfismo nas Contas Bancárias](tickets/ticket-03-hierarquia-contas-polimorfismo.md) — *Aguardando Ticket 02*.
-- [ ] [Ticket 04: Abstração e Polimorfismo para Exportadores de Relatório](tickets/ticket-04-interfaces-exportadores.md) — *Aguardando Ticket 02*.
 - [ ] [Ticket 05: Integração de Rotas e Atualização da Interface](tickets/ticket-05-rotas-e-frontend.md) — *Aguardando Tickets 03 e 04*.
 
 ## Not yet specified

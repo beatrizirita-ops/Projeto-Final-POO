@@ -1,7 +1,7 @@
 # Ticket 02: Encapsulamento com Value Objects (Dinheiro e Vencimento)
 
 - **Tipo**: `wayfinder:task`
-- **Status**: Aberto (Fronteira)
+- **Status**: [CONCLUÍDO]
 - **Bloqueado por**: Nenhum
 
 ---
@@ -43,7 +43,7 @@ Substituir o uso de tipos primitivos crus (`number` solto para dinheiro e `strin
 ---
 
 ## 🏁 Critério de Aceite
-- [ ] Classes `Dinheiro` e `Vencimento` implementadas com atributos privados e imutabilidade garantida.
-- [ ] Regras de arredondamento centralizadas em `Dinheiro`.
-- [ ] Lançamentos instanciados usando os Value Objects em vez de valores literais desprotegidos.
+- [x] Classes `Dinheiro` e `Vencimento` implementadas com atributos privados e imutabilidade garantida.
+- [x] Regras de arredondamento centralizadas em `Dinheiro`.
+- [x] Lançamentos instanciados usando os Value Objects em vez de valores literais desprotegidos.
 
