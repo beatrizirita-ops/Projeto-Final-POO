@@ -116,14 +116,33 @@ export function criarRecorrencia(tipo: string): Recorrencia {
   }
 }
 
-// ===== Encapsulamento (Aula 3): o saldo só muda por aplicar() =====
+// ===== Encapsulamento (Aula 3): o saldo só muda por aplicar() e é protegido por Dinheiro =====
 export class Conta {
-  constructor(public readonly id: number, public readonly nome: string, private saldo: number) {}
-  getSaldo(): number { return Math.round(this.saldo * 100) / 100; }
+  private saldo: Dinheiro;
+
+  constructor(
+    public readonly id: number,
+    public readonly nome: string,
+    saldoInicial: number | Dinheiro,
+  ) {
+    this.saldo = saldoInicial instanceof Dinheiro ? saldoInicial : Dinheiro.deReais(saldoInicial);
+  }
+
+  getSaldo(): number {
+    return this.saldo.emReais();
+  }
+
+  getSaldoDinheiro(): Dinheiro {
+    return this.saldo;
+  }
+
   aplicar(lancamento: Lancamento, hoje: Date): void {
     const efeito = lancamento.efeitoNoSaldo(hoje);
-    if (this.saldo + efeito < 0) throw new Error(`Saldo insuficiente na conta ${this.nome}.`);
-    this.saldo += efeito;
+    const novoSaldo = this.saldo.somar(efeito);
+    if (novoSaldo.ehNegativo()) {
+      throw new Error(`Saldo insuficiente na conta ${this.nome}.`);
+    }
+    this.saldo = novoSaldo;
   }
 }
 
