@@ -1,10 +1,71 @@
 import { DatabaseSync } from 'node:sqlite';
+import { prisma } from './prisma.ts';
 import type { ContaData, Etapa, FinanceiroRepository, LancamentoData, OrcamentoData } from './dominio.ts';
 import type { UsuarioData, UsuarioRepository } from './auth.ts';
 
 const COLUNAS = 'l.id, l.conta_id AS contaId, l.tipo, l.descricao, l.valor, l.vencimento, l.etapa, l.categoria, l.valor_pago AS valorPago';
 
-// Uma classe SQLite que cumpre os dois contratos (finanças e usuários)
+// Repositório de Usuários com Prisma ORM
+export class PrismaUsuarioRepository implements UsuarioRepository {
+  async criarUsuario(nome: string, email: string, senhaHash: string): Promise<number> {
+    const usuario = await prisma.usuario.create({
+      data: {
+        nome,
+        email,
+        senhaHash,
+      },
+    });
+    return usuario.id;
+  }
+
+  async buscarPorEmail(email: string): Promise<(UsuarioData & { senhaHash: string }) | undefined> {
+    const usuario = await prisma.usuario.findUnique({
+      where: { email },
+    });
+    if (!usuario) return undefined;
+    return {
+      id: usuario.id,
+      nome: usuario.nome,
+      email: usuario.email,
+      senhaHash: usuario.senhaHash,
+    };
+  }
+
+  async criarSessao(token: string, usuarioId: number, expiraEm: number): Promise<void> {
+    await prisma.sessao.create({
+      data: {
+        token,
+        usuarioId,
+        expiraEm: BigInt(expiraEm),
+      },
+    });
+  }
+
+  async buscarPorToken(token: string, agora: number): Promise<UsuarioData | undefined> {
+    const sessao = await prisma.sessao.findUnique({
+      where: { token },
+      include: { usuario: true },
+    });
+
+    if (!sessao || Number(sessao.expiraEm) <= agora) {
+      return undefined;
+    }
+
+    return {
+      id: sessao.usuario.id,
+      nome: sessao.usuario.nome,
+      email: sessao.usuario.email,
+    };
+  }
+
+  async removerSessao(token: string): Promise<void> {
+    await prisma.sessao.deleteMany({
+      where: { token },
+    });
+  }
+}
+
+// Uma classe SQLite que cumpre os dois contratos (mantida para a transição dos passos)
 export class SqliteRepository implements FinanceiroRepository, UsuarioRepository {
   private readonly db: DatabaseSync;
 
@@ -51,7 +112,6 @@ export class SqliteRepository implements FinanceiroRepository, UsuarioRepository
         FOREIGN KEY (conta_id) REFERENCES contas(id)
       );
     `);
-    // Bancos criados em versões anteriores ganham as colunas novas
     for (const coluna of ["categoria TEXT NOT NULL DEFAULT 'Outros'", 'valor_pago REAL']) {
       try { this.db.exec(`ALTER TABLE lancamentos ADD COLUMN ${coluna}`); } catch { /* a coluna já existe */ }
     }
@@ -121,7 +181,6 @@ export class SqliteRepository implements FinanceiroRepository, UsuarioRepository
     this.db.prepare('UPDATE lancamentos SET etapa = :etapa WHERE id = :id').run({ etapa, id });
   }
 
-  // Transação: o saldo e a etapa mudam juntos, ou nada muda
   async efetivarPagamento(lancamentoId: number, contaId: number, novoSaldo: number, valorPago: number): Promise<void> {
     this.db.exec('BEGIN TRANSACTION');
     try {
