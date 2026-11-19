@@ -1,11 +1,13 @@
 import { CATEGORIAS, GestorFinanceiro } from './dominio.ts';
 import { ServicoAuth } from './auth.ts';
-import { SqliteRepository } from './repository.ts';
+import { PrismaFinanceiroRepository, PrismaUsuarioRepository } from './repository.ts';
 
-// Injeção de dependência: um repository alimenta os dois serviços
-const repo = new SqliteRepository('financeiro.db');
-const gestor = new GestorFinanceiro(repo);
-const auth = new ServicoAuth(repo);
+// Injeção de dependência com Prisma ORM
+const repoFinanceiro = new PrismaFinanceiroRepository();
+const repoUsuario = new PrismaUsuarioRepository();
+
+const gestor = new GestorFinanceiro(repoFinanceiro);
+const auth = new ServicoAuth(repoUsuario);
 
 const json = (dados: unknown, status = 200) =>
   new Response(JSON.stringify(dados), { status, headers: { 'Content-Type': 'application/json' } });
@@ -21,7 +23,7 @@ Deno.serve({ port: 3000 }, async (req) => {
     // ----- rotas públicas -----
     if (recurso === 'auth' && id === 'cadastro' && m === 'POST') {
       const u = await auth.cadastrar(String(corpo.nome ?? ''), String(corpo.email ?? ''), String(corpo.senha ?? ''));
-      await repo.criarConta(u.id, 'Conta corrente', 0); // toda pessoa nova ganha uma conta
+      await repoFinanceiro.criarConta(u.id, 'Conta corrente', 0); // toda pessoa nova ganha uma conta
       return json(await auth.entrar(corpo.email, corpo.senha), 201);
     }
     if (recurso === 'auth' && id === 'login' && m === 'POST') {
@@ -44,10 +46,10 @@ Deno.serve({ port: 3000 }, async (req) => {
       await gestor.definirOrcamento(uid, decodeURIComponent(id), Number(corpo.limite));
       return json({ ok: true });
     }
-    if (recurso === 'contas' && m === 'GET') return json(await repo.listarContas(uid));
+    if (recurso === 'contas' && m === 'GET') return json(await repoFinanceiro.listarContas(uid));
     if (recurso === 'contas' && m === 'POST') {
       if (!String(corpo.nome ?? '').trim()) throw new Error('Informe o nome da conta.');
-      return json({ id: await repo.criarConta(uid, corpo.nome.trim(), Number(corpo.saldoInicial ?? 0)) }, 201);
+      return json({ id: await repoFinanceiro.criarConta(uid, corpo.nome.trim(), Number(corpo.saldoInicial ?? 0)) }, 201);
     }
     if (recurso === 'lancamentos' && !id && m === 'GET') return json(await gestor.listar(uid));
     if (recurso === 'lancamentos' && !id && m === 'POST') {
@@ -60,7 +62,7 @@ Deno.serve({ port: 3000 }, async (req) => {
       return json({ ok: true });
     }
     if (recurso === 'lancamentos' && id && m === 'DELETE') {
-      await repo.removerLancamento(Number(id), uid);
+      await repoFinanceiro.removerLancamento(Number(id), uid);
       return new Response(null, { status: 204 });
     }
     return json({ erro: 'Rota não encontrada.' }, 404);
