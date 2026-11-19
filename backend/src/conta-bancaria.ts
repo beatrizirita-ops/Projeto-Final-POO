@@ -43,3 +43,15 @@ export abstract class ContaBancaria {
   // Método polimórfico abstrato: cada subclasse implementará sua própria regra
   abstract aplicar(lancamento: Lancamento, dataOperacao: Date): void;
 }
+
+// ===== Subclasse: ContaCorrente =====
+export class ContaCorrente extends ContaBancaria {
+  aplicar(lancamento: Lancamento, dataOperacao: Date): void {
+    const efeito = lancamento.efeitoNoSaldo(dataOperacao);
+    if (efeito.ehNegativo()) {
+      this.debitar(Dinheiro.ZERO.subtrair(efeito));
+    } else {
+      this.creditar(efeito);
+    }
+  }
+}
