@@ -1,5 +1,6 @@
 export { Dinheiro } from './dinheiro.ts';
 export { Vencimento } from './vencimento.ts';
+export { ContaBancaria } from './conta-bancaria.ts';
 
 import { Dinheiro } from './dinheiro.ts';
 import { Vencimento } from './vencimento.ts';
