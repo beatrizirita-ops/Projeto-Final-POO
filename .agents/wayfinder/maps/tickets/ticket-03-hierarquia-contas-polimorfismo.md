@@ -1,8 +1,8 @@
 # Ticket 03: Herança e Polimorfismo nas Contas Bancárias
 
 - **Tipo**: `wayfinder:task`
-- **Status**: Bloqueado
-- **Bloqueado por**: Ticket 01 (Prisma), Ticket 02 (Value Objects)
+- **Status**: [CONCLUÍDO]
+- **Bloqueado por**: Nenhum
 
 ---
 
@@ -46,8 +46,8 @@ Implementar uma hierarquia de herança e polimorfismo para modelar diferentes ca
 ---
 
 ## 🏁 Critério de Aceite
-- [ ] Classe abstrata e subclasses com métodos abstratos e sobrescritas polimórficas funcionais.
-- [ ] Teste unitário ou verificação demonstrando:
+- [x] Classe abstrata e subclasses com métodos abstratos e sobrescritas polimórficas funcionais.
+- [x] Teste unitário ou verificação demonstrando:
   - O rendimento da Poupança ocorrendo especificamente quando simulado no dia 15.
   - A geração e acúmulo de cashback no Cartão de Crédito e validação de limite da fatura.
 

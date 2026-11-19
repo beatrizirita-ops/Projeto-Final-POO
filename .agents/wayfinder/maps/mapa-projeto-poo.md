@@ -18,9 +18,9 @@ Transformar o backend do projeto Caixa em uma referência didática completa dos
 - [x] **Escopo de Padrões**: Padrões GoF avançados (como Observer) foram descartados para manter alinhamento com a ementa atual da disciplina.
 - [x] **Ticket 01 Concluído**: Integração do Prisma ORM com SQLite, schemas de Usuário, Sessão, Conta, Lançamento e Orçamento, e repositórios desacoplados (`PrismaUsuarioRepository` e `PrismaFinanceiroRepository`).
 - [x] **Ticket 02 Concluído**: Encapsulamento com Value Objects imutáveis (`Dinheiro` em centavos e `Vencimento` com datas seguras) aplicado em `Lancamento`, `Conta` e `GestorFinanceiro`.
+- [x] **Ticket 03 Concluído**: Hierarquia de contas bancárias com classe abstrata `ContaBancaria` e subclasses polimórficas `ContaCorrente`, `ContaPoupanca` (rendimento no dia 15) e `CartaoCredito` (limite e cashback).
 
 ## Frontier (Abertos e Disponíveis para Execução)
-- [ ] [Ticket 03: Herança e Polimorfismo nas Contas Bancárias](tickets/ticket-03-hierarquia-contas-polimorfismo.md) — Especialização de `ContaCorrente`, `CartaoCredito` com cashback e `ContaPoupanca` com rendimento.
 - [ ] [Ticket 04: Abstração e Polimorfismo para Exportadores de Relatório](tickets/ticket-04-interfaces-exportadores.md) — Interfaces de exportação (CSV, JSON).
 
 ## Blocked (Aguardando dependências da fronteira)

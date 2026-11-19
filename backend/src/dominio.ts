@@ -1,5 +1,7 @@
 export { Dinheiro } from './dinheiro.ts';
 export { Vencimento } from './vencimento.ts';
+export { ContaBancaria, ContaCorrente, ContaPoupanca, CartaoCredito, criarContaBancaria } from './conta-bancaria.ts';
+import { criarContaBancaria } from './conta-bancaria.ts';
 
 import { Dinheiro } from './dinheiro.ts';
 import { Vencimento } from './vencimento.ts';
@@ -142,7 +144,15 @@ export class Conta {
 }
 
 // ===== DTOs: só dados, para gravar no banco e enviar como JSON (Aula 9) =====
-export interface ContaData { id: number; nome: string; saldo: number }
+export interface ContaData {
+  id: number;
+  nome: string;
+  saldo: number;
+  tipo?: string;
+  limiteCredito?: number | null;
+  taxaCashback?: number | null;
+  diaAniversario?: number | null;
+}
 export interface LancamentoData {
   id: number; contaId: number; tipo: Tipo; descricao: string;
   valor: number; vencimento: string; etapa: Etapa;
@@ -233,7 +243,7 @@ export class GestorFinanceiro {
     // Pagar: aplica na conta e grava tudo em uma transação
     const dc = (await this.repo.listarContas(uid)).find((c) => c.id === d.contaId);
     if (!dc) throw new Error('Conta não encontrada.');
-    const conta = new Conta(dc.id, dc.nome, dc.saldo);
+    const conta = criarContaBancaria(dc);
     const agora = new Date();
     const lanc = criarLancamento(d.tipo, d.descricao, d.valor, d.vencimento);
     conta.aplicar(lanc, agora);
