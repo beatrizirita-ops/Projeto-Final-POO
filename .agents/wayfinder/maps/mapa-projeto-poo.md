@@ -15,16 +15,17 @@ Transformar o backend do projeto Caixa em uma referência didática completa dos
 ## Decisions so far
 - [x] **ORM Definido**: Prisma selecionado para mapeamento objeto-relacional do SQLite.
 - [x] **Escopo de Contas**: Cartão de Crédito com cashback e Conta Poupança com rendimento no dia 15.
-- [x] **Escopo de Padrões**: Padrões GoF avançados (como Observer) foram declarados fora de escopo para manter alinhamento com a ementa atual da disciplina.
+- [x] **Escopo de Padrões**: Padrões GoF avançados (como Observer) foram descartados para manter alinhamento com a ementa atual da disciplina.
+- [x] **Ticket 01 Concluído**: Integração do Prisma ORM com SQLite, schemas de Usuário, Sessão, Conta, Lançamento e Orçamento, e repositórios desacoplados (`PrismaUsuarioRepository` e `PrismaFinanceiroRepository`).
 
 ## Frontier (Abertos e Disponíveis para Execução)
-- [ ] [Ticket 01: Modelagem e Integração do ORM Prisma](tickets/ticket-01-integracao-prisma-orm.md) — Substituto da camada SQL manual por Prisma Client tipado.
+- [x] [Ticket 01: Modelagem e Integração do ORM Prisma](tickets/ticket-01-integracao-prisma-orm.md) — *Concluído com sucesso.*
 - [ ] [Ticket 02: Encapsulamento com Value Objects (Dinheiro e Vencimento)](tickets/ticket-02-value-objects-encapsulamento.md) — Tipos de valor imutáveis e proteção contra valores inválidos.
 
 ## Blocked (Aguardando dependências da fronteira)
-- [ ] [Ticket 03: Herança e Polimorfismo nas Contas Bancárias](tickets/ticket-03-hierarquia-contas-polimorfismo.md) — *Bloqueado por Ticket 01 e 02*.
-- [ ] [Ticket 04: Abstração e Polimorfismo para Exportadores de Relatório](tickets/ticket-04-interfaces-exportadores.md) — *Bloqueado por Ticket 02*.
-- [ ] [Ticket 05: Integração de Rotas e Atualização da Interface](tickets/ticket-05-rotas-e-frontend.md) — *Bloqueado por Ticket 03 e 04*.
+- [ ] [Ticket 03: Herança e Polimorfismo nas Contas Bancárias](tickets/ticket-03-hierarquia-contas-polimorfismo.md) — *Aguardando Ticket 02*.
+- [ ] [Ticket 04: Abstração e Polimorfismo para Exportadores de Relatório](tickets/ticket-04-interfaces-exportadores.md) — *Aguardando Ticket 02*.
+- [ ] [Ticket 05: Integração de Rotas e Atualização da Interface](tickets/ticket-05-rotas-e-frontend.md) — *Aguardando Tickets 03 e 04*.
 
 ## Not yet specified
 - Mecanismo de fechamento e virada de fatura do Cartão de Crédito.

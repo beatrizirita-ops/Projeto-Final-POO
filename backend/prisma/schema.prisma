@@ -1,0 +1,69 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Usuario {
+  id         Int          @id @default(autoincrement())
+  nome       String
+  email      String       @unique
+  senhaHash  String       @map("senha_hash")
+  sessoes    Sessao[]
+  contas     Conta[]
+  orcamentos Orcamento[]
+
+  @@map("usuarios")
+}
+
+model Sessao {
+  token     String   @id
+  usuarioId Int      @map("usuario_id")
+  expiraEm  BigInt   @default(0) @map("expira_em")
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@map("sessoes")
+}
+
+model Conta {
+  id             Int          @id @default(autoincrement())
+  usuarioId      Int          @map("usuario_id")
+  nome           String
+  saldo          Float        @default(0)
+  tipo           String       @default("CORRENTE") // CORRENTE, POUPANCA, CARTAO
+  limiteCredito  Float?       @map("limite_credito")
+  taxaCashback   Float?       @map("taxa_cashback")
+  diaAniversario Int?         @map("dia_aniversario")
+  usuario        Usuario      @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  lancamentos    Lancamento[]
+
+  @@map("contas")
+}
+
+model Lancamento {
+  id         Int     @id @default(autoincrement())
+  contaId    Int     @map("conta_id")
+  tipo       String  // receita, despesa, boleto
+  descricao  String
+  valor      Float
+  vencimento String  // yyyy-mm-dd
+  etapa      String  @default("pendente") // pendente, agendado, pago
+  categoria  String  @default("Outros")
+  valorPago  Float?  @map("valor_pago")
+  conta      Conta   @relation(fields: [contaId], references: [id], onDelete: Cascade)
+
+  @@map("lancamentos")
+}
+
+model Orcamento {
+  usuarioId Int     @map("usuario_id")
+  categoria String
+  limite    Float
+  usuario   Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@id([usuarioId, categoria])
+  @@map("orcamentos")
+}
