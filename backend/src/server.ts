@@ -1,4 +1,4 @@
-import { CATEGORIAS, GestorFinanceiro } from './dominio.ts';
+import { CATEGORIAS, CartaoCredito, ContaPoupanca, criarContaBancaria, GestorFinanceiro } from './dominio.ts';
 import { ServicoAuth } from './auth.ts';
 import { PrismaFinanceiroRepository, PrismaUsuarioRepository } from './repository.ts';
 import { criarExportador } from './exportadores.ts';
@@ -15,7 +15,7 @@ const json = (dados: unknown, status = 200) =>
 
 Deno.serve({ port: 3000 }, async (req) => {
   const url = new URL(req.url);
-  const [recurso, id] = url.pathname.split('/').filter(Boolean);
+  const [recurso, id, acao] = url.pathname.split('/').filter(Boolean);
   const m = req.method;
 
   try {
@@ -60,10 +60,42 @@ Deno.serve({ port: 3000 }, async (req) => {
       await gestor.definirOrcamento(uid, decodeURIComponent(id), Number(corpo.limite));
       return json({ ok: true });
     }
-    if (recurso === 'contas' && m === 'GET') return json(await repoFinanceiro.listarContas(uid));
-    if (recurso === 'contas' && m === 'POST') {
+    if (recurso === 'contas' && id && acao === 'render' && m === 'POST') {
+      const dc = (await repoFinanceiro.listarContas(uid)).find((c) => c.id === Number(id));
+      if (!dc) throw new Error('Conta não encontrada.');
+      const conta = criarContaBancaria(dc);
+      if (!(conta instanceof ContaPoupanca)) throw new Error('Apenas contas poupança possuem rendimento.');
+      const rendimento = conta.render(new Date());
+      await repoFinanceiro.atualizarSaldoConta(conta.id, conta.getSaldo());
+      return json({ rendimento: rendimento.emReais(), saldo: conta.getSaldo() });
+    }
+    if (recurso === 'contas' && id && acao === 'resgatar-cashback' && m === 'POST') {
+      const contas = await repoFinanceiro.listarContas(uid);
+      const dcOrigem = contas.find((c) => c.id === Number(id));
+      const dcDestino = contas.find((c) => c.id === Number(corpo.paraContaId));
+      if (!dcOrigem || !dcDestino) throw new Error('Conta de origem ou destino não encontrada.');
+      const origem = criarContaBancaria(dcOrigem);
+      if (!(origem instanceof CartaoCredito)) throw new Error('Apenas cartões de crédito possuem cashback.');
+      const destino = criarContaBancaria(dcDestino);
+      const resgatado = origem.resgatarCashback(destino);
+      await repoFinanceiro.atualizarSaldoConta(destino.id, destino.getSaldo());
+      return json({ resgatado: resgatado.emReais(), saldoDestino: destino.getSaldo() });
+    }
+    if (recurso === 'contas' && !id && m === 'GET') return json(await repoFinanceiro.listarContas(uid));
+    if (recurso === 'contas' && !id && m === 'POST') {
       if (!String(corpo.nome ?? '').trim()) throw new Error('Informe o nome da conta.');
-      return json({ id: await repoFinanceiro.criarConta(uid, corpo.nome.trim(), Number(corpo.saldoInicial ?? 0)) }, 201);
+      const tipo = String(corpo.tipo ?? 'CORRENTE').trim().toUpperCase();
+      const limiteCredito = corpo.limiteCredito !== undefined ? Number(corpo.limiteCredito) : null;
+      const saldoInicial = tipo === 'CARTAO' && corpo.saldoInicial === undefined && limiteCredito !== null
+        ? limiteCredito
+        : Number(corpo.saldoInicial ?? 0);
+      const idConta = await repoFinanceiro.criarConta(uid, corpo.nome.trim(), saldoInicial, {
+        tipo,
+        limiteCredito,
+        taxaCashback: corpo.taxaCashback !== undefined ? Number(corpo.taxaCashback) : (tipo === 'CARTAO' ? 0.01 : null),
+        diaAniversario: corpo.diaAniversario !== undefined ? Number(corpo.diaAniversario) : (tipo === 'POUPANCA' ? 15 : null),
+      });
+      return json({ id: idConta }, 201);
     }
     if (recurso === 'lancamentos' && !id && m === 'GET') return json(await gestor.listar(uid));
     if (recurso === 'lancamentos' && !id && m === 'POST') {

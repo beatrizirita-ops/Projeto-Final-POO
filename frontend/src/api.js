@@ -46,10 +46,22 @@ export const api = {
   // finanças
   resumo: () => request('/resumo'),
   relatorio: (mes) => request(`/relatorio?mes=${mes}`),
+  exportarRelatorio: async (mes, formato) => {
+    const res = await fetch(`/relatorio/exportar?mes=${mes}&formato=${formato}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!res.ok) {
+      const dados = await res.json().catch(() => null);
+      throw new Error(dados?.erro ?? `Erro ${res.status}`);
+    }
+    return res.blob();
+  },
   categorias: () => request('/categorias'),
   listarContas: () => request('/contas'),
   listarLancamentos: () => request('/lancamentos'),
-  criarConta: (nome, saldoInicial) => enviar('POST', '/contas', { nome, saldoInicial }),
+  criarConta: (dados) => enviar('POST', '/contas', dados),
+  renderPoupanca: (id) => enviar('POST', `/contas/${id}/render`, {}),
+  resgatarCashback: (id, paraContaId) => enviar('POST', `/contas/${id}/resgatar-cashback`, { paraContaId }),
   criarLancamento: (dados) => enviar('POST', '/lancamentos', dados),
   editar: (id, dados) => enviar('PATCH', `/lancamentos/${id}`, dados),
   definirOrcamento: (categoria, limite) => enviar('PUT', `/orcamentos/${encodeURIComponent(categoria)}`, { limite }),

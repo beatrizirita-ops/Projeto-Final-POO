@@ -1,5 +1,5 @@
 import { prisma } from './prisma.ts';
-import type { ContaData, Etapa, FinanceiroRepository, LancamentoData, OrcamentoData } from './dominio.ts';
+import type { ContaData, Etapa, FinanceiroRepository, LancamentoData, OpcoesConta, OrcamentoData } from './dominio.ts';
 import type { UsuarioData, UsuarioRepository } from './auth.ts';
 
 // ==========================================
@@ -84,15 +84,26 @@ export class PrismaFinanceiroRepository implements FinanceiroRepository {
     }));
   }
 
-  async criarConta(usuarioId: number, nome: string, saldoInicial: number): Promise<number> {
+  async criarConta(usuarioId: number, nome: string, saldoInicial: number, opcoes?: OpcoesConta): Promise<number> {
     const conta = await prisma.conta.create({
       data: {
         usuarioId,
         nome,
         saldo: saldoInicial,
+        tipo: opcoes?.tipo ?? 'CORRENTE',
+        limiteCredito: opcoes?.limiteCredito ?? null,
+        taxaCashback: opcoes?.taxaCashback ?? null,
+        diaAniversario: opcoes?.diaAniversario ?? null,
       },
     });
     return conta.id;
+  }
+
+  async atualizarSaldoConta(contaId: number, novoSaldo: number): Promise<void> {
+    await prisma.conta.update({
+      where: { id: contaId },
+      data: { saldo: novoSaldo },
+    });
   }
 
   async listarLancamentos(usuarioId: number): Promise<LancamentoData[]> {

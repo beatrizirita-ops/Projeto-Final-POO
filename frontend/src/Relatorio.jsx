@@ -32,12 +32,16 @@ export default function Relatorio() {
     }
   };
 
-  // CSV com ; e BOM para abrir direto no Excel em português
-  const exportar = () => {
-    const linhas = ['Categoria;Total;Percentual', ...r.porCategoria.map((c) => `${c.categoria};${c.total.toFixed(2).replace('.', ',')};${c.percentual}%`)];
-    const url = URL.createObjectURL(new Blob(['\uFEFF' + linhas.join('\n')], { type: 'text/csv;charset=utf-8' }));
-    Object.assign(document.createElement('a'), { href: url, download: `gastos-${mes}.csv` }).click();
-    URL.revokeObjectURL(url);
+  const exportarFormato = async (formato) => {
+    try {
+      setErro('');
+      const blob = await api.exportarRelatorio(mes, formato);
+      const url = URL.createObjectURL(blob);
+      Object.assign(document.createElement('a'), { href: url, download: `relatorio-${mes}.${formato}` }).click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setErro(err.message);
+    }
   };
 
   const vazio = r && r.totalSaidas === 0 && r.entradas === 0 && r.previstoEntradas === 0;
@@ -50,7 +54,12 @@ export default function Relatorio() {
     <section className="relatorio">
       <div className="rel-topo">
         <label>Mês<input type="month" value={mes} onChange={(e) => e.target.value && setMes(e.target.value)} /></label>
-        {r && !vazio && <button className="sec" onClick={exportar}>Exportar gastos (CSV)</button>}
+        {r && !vazio && (
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button className="sec" onClick={() => exportarFormato('csv')}>Exportar CSV</button>
+            <button className="sec" onClick={() => exportarFormato('json')}>Exportar JSON</button>
+          </div>
+        )}
       </div>
       {erro && <p className="erro" role="alert">{erro}</p>}
       {vazio && <p className="vazio">Nenhum lançamento vence em {nomeMes(mes)}. Adicione lançamentos no quadro.</p>}

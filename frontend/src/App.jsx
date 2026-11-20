@@ -23,7 +23,7 @@ function Painel({ usuario, onSair }) {
   const [aba, setAba] = useState('quadro');
   const [editando, setEditando] = useState(null); // id do lançamento em edição
   const [categorias, setCategorias] = useState([]);
-  const [novaConta, setNovaConta] = useState({ nome: '', saldo: '' });
+  const [novaConta, setNovaConta] = useState({ nome: '', saldo: '', tipo: 'CORRENTE', limiteCredito: '' });
 
   // Busca tudo em paralelo (Promise.all) e atualiza o estado
   const refresh = async () => {
@@ -68,8 +68,13 @@ function Painel({ usuario, onSair }) {
   const criarConta = (e) => {
     e.preventDefault();
     action(async () => {
-      await api.criarConta(novaConta.nome, Number(novaConta.saldo || 0));
-      setNovaConta({ nome: '', saldo: '' });
+      await api.criarConta({
+        nome: novaConta.nome,
+        saldoInicial: Number(novaConta.saldo || 0),
+        tipo: novaConta.tipo,
+        ...(novaConta.tipo === 'CARTAO' ? { limiteCredito: Number(novaConta.limiteCredito || 0) } : {}),
+      });
+      setNovaConta({ nome: '', saldo: '', tipo: 'CORRENTE', limiteCredito: '' });
     });
   };
 
@@ -178,9 +183,45 @@ function Painel({ usuario, onSair }) {
 
       <form className="novo conta" onSubmit={criarConta}>
         <input placeholder="Nome da nova conta (ex.: Carteira)" value={novaConta.nome} onChange={(e) => setNovaConta({ ...novaConta, nome: e.target.value })} aria-label="Nome da conta" required />
-        <input type="number" step="0.01" placeholder="Saldo inicial (R$)" value={novaConta.saldo} onChange={(e) => setNovaConta({ ...novaConta, saldo: e.target.value })} aria-label="Saldo inicial" />
+        <select value={novaConta.tipo} onChange={(e) => setNovaConta({ ...novaConta, tipo: e.target.value })} aria-label="Tipo da conta">
+          <option value="CORRENTE">Conta Corrente</option>
+          <option value="POUPANCA">Conta Poupança (rende dia 15)</option>
+          <option value="CARTAO">Cartão de Crédito (cashback)</option>
+        </select>
+        {novaConta.tipo === 'CARTAO' ? (
+          <input type="number" step="0.01" placeholder="Limite de crédito (R$)" value={novaConta.limiteCredito} onChange={(e) => setNovaConta({ ...novaConta, limiteCredito: e.target.value })} aria-label="Limite de crédito" required />
+        ) : (
+          <input type="number" step="0.01" placeholder="Saldo inicial (R$)" value={novaConta.saldo} onChange={(e) => setNovaConta({ ...novaConta, saldo: e.target.value })} aria-label="Saldo inicial" />
+        )}
         <button type="submit" className="sec">Criar conta</button>
       </form>
+
+      <section className="contas-lista" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '12px' }}>
+        {contas.map((c) => {
+          const destino = contas.find((out) => out.id !== c.id && out.tipo !== 'CARTAO');
+          return (
+            <div key={c.id} className="card" style={{ padding: '10px 14px', minWidth: '200px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+                <strong>{c.nome}</strong>
+                <span className="badge">{c.tipo ?? 'CORRENTE'}</span>
+              </div>
+              <div style={{ marginTop: '6px', fontSize: '0.9rem' }}>
+                {c.tipo === 'CARTAO' ? `Disponível: ${moeda(c.saldo)}` : `Saldo: ${moeda(c.saldo)}`}
+              </div>
+              {c.tipo === 'POUPANCA' && (
+                <button type="button" className="sec" style={{ marginTop: '6px' }} onClick={() => action(() => api.renderPoupanca(c.id))}>
+                  Render Poupança
+                </button>
+              )}
+              {c.tipo === 'CARTAO' && destino && (
+                <button type="button" className="sec" style={{ marginTop: '6px' }} onClick={() => action(() => api.resgatarCashback(c.id, destino.id))}>
+                  Resgatar Cashback
+                </button>
+              )}
+            </div>
+          );
+        })}
+      </section>
       </>)}
     </div>
   );

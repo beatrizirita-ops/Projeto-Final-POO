@@ -1,8 +1,8 @@
 # Ticket 05: Integração de Rotas e Atualização da Interface
 
 - **Tipo**: `wayfinder:task`
-- **Status**: Bloqueado
-- **Bloqueado por**: Ticket 03 (Hierarquia de Contas), Ticket 04 (Exportadores)
+- **Status**: [CONCLUÍDO]
+- **Bloqueado por**: Nenhum
 
 ---
 
@@ -32,7 +32,7 @@ Expor os novos recursos de POO na API REST do backend e atualizar o frontend par
 ---
 
 ## 🏁 Critério de Aceite
-- [ ] Usuário consegue cadastrar os 3 tipos de contas na interface.
-- [ ] Informações de cashback e rendimento são visíveis e acionáveis pelo usuário.
-- [ ] Exportação nos dois formatos funcionando diretamente pelo navegador.
+- [x] Usuário consegue cadastrar os 3 tipos de contas na interface.
+- [x] Informações de cashback e rendimento são visíveis e acionáveis pelo usuário.
+- [x] Exportação nos dois formatos funcionando diretamente pelo navegador.
 

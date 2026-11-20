@@ -20,9 +20,10 @@ Transformar o backend do projeto Caixa em uma referência didática completa dos
 - [x] **Ticket 02 Concluído**: Encapsulamento com Value Objects imutáveis (`Dinheiro` em centavos e `Vencimento` com datas seguras) aplicado em `Lancamento`, `Conta` e `GestorFinanceiro`.
 - [x] **Ticket 03 Concluído**: Hierarquia de contas bancárias com classe abstrata `ContaBancaria` e subclasses polimórficas `ContaCorrente`, `ContaPoupanca` (rendimento no dia 15) e `CartaoCredito` (limite e cashback).
 - [x] **Ticket 04 Concluído**: Subsistema de exportação de relatórios com interface `ExportadorRelatorio`, implementações polimórficas (`ExportadorCsv` e `ExportadorJson`) e rota `/relatorio/exportar`.
+- [x] **Ticket 05 Concluído**: Integração das rotas de criação de contas tipadas, rendimento, resgate de cashback e exportação CSV/JSON no frontend React.
 
 ## Frontier (Abertos e Disponíveis para Execução)
-- [ ] [Ticket 05: Integração de Rotas e Atualização da Interface](tickets/ticket-05-rotas-e-frontend.md) — Exposição das novas contas e exportação no frontend.
+*(Todos os tickets da fronteira foram concluídos!)*
 
 ## Blocked (Aguardando dependências da fronteira)
 *(Nenhum ticket bloqueado no momento)*
