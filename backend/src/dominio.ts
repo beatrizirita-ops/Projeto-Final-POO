@@ -163,9 +163,16 @@ export interface OrcamentoData { categoria: string; limite: number }
 export type LancamentoView = LancamentoData & { valorAtualizado: number; vencido: boolean };
 
 // ===== Repository (Aulas 9 e 10): contrato assíncrono. Todo dado pertence a um usuário =====
+export interface OpcoesConta {
+  tipo?: string;
+  limiteCredito?: number | null;
+  taxaCashback?: number | null;
+  diaAniversario?: number | null;
+}
+
 export interface FinanceiroRepository {
   listarContas(usuarioId: number): Promise<ContaData[]>;
-  criarConta(usuarioId: number, nome: string, saldoInicial: number): Promise<number>;
+  criarConta(usuarioId: number, nome: string, saldoInicial: number, opcoes?: OpcoesConta): Promise<number>;
   listarLancamentos(usuarioId: number): Promise<LancamentoData[]>;
   buscarLancamento(id: number, usuarioId: number): Promise<LancamentoData | undefined>;
   criarLancamento(dados: Omit<LancamentoData, 'id'>): Promise<number>;

@@ -63,7 +63,18 @@ Deno.serve({ port: 3000 }, async (req) => {
     if (recurso === 'contas' && m === 'GET') return json(await repoFinanceiro.listarContas(uid));
     if (recurso === 'contas' && m === 'POST') {
       if (!String(corpo.nome ?? '').trim()) throw new Error('Informe o nome da conta.');
-      return json({ id: await repoFinanceiro.criarConta(uid, corpo.nome.trim(), Number(corpo.saldoInicial ?? 0)) }, 201);
+      const tipo = String(corpo.tipo ?? 'CORRENTE').trim().toUpperCase();
+      const limiteCredito = corpo.limiteCredito !== undefined ? Number(corpo.limiteCredito) : null;
+      const saldoInicial = tipo === 'CARTAO' && corpo.saldoInicial === undefined && limiteCredito !== null
+        ? limiteCredito
+        : Number(corpo.saldoInicial ?? 0);
+      const idConta = await repoFinanceiro.criarConta(uid, corpo.nome.trim(), saldoInicial, {
+        tipo,
+        limiteCredito,
+        taxaCashback: corpo.taxaCashback !== undefined ? Number(corpo.taxaCashback) : (tipo === 'CARTAO' ? 0.01 : null),
+        diaAniversario: corpo.diaAniversario !== undefined ? Number(corpo.diaAniversario) : (tipo === 'POUPANCA' ? 15 : null),
+      });
+      return json({ id: idConta }, 201);
     }
     if (recurso === 'lancamentos' && !id && m === 'GET') return json(await gestor.listar(uid));
     if (recurso === 'lancamentos' && !id && m === 'POST') {
