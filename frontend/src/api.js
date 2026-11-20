@@ -46,6 +46,16 @@ export const api = {
   // finanças
   resumo: () => request('/resumo'),
   relatorio: (mes) => request(`/relatorio?mes=${mes}`),
+  exportarRelatorio: async (mes, formato) => {
+    const res = await fetch(`/relatorio/exportar?mes=${mes}&formato=${formato}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!res.ok) {
+      const dados = await res.json().catch(() => null);
+      throw new Error(dados?.erro ?? `Erro ${res.status}`);
+    }
+    return res.blob();
+  },
   categorias: () => request('/categorias'),
   listarContas: () => request('/contas'),
   listarLancamentos: () => request('/lancamentos'),
