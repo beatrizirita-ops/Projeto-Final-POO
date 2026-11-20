@@ -173,6 +173,7 @@ export interface OpcoesConta {
 export interface FinanceiroRepository {
   listarContas(usuarioId: number): Promise<ContaData[]>;
   criarConta(usuarioId: number, nome: string, saldoInicial: number, opcoes?: OpcoesConta): Promise<number>;
+  atualizarSaldoConta(contaId: number, novoSaldo: number): Promise<void>;
   listarLancamentos(usuarioId: number): Promise<LancamentoData[]>;
   buscarLancamento(id: number, usuarioId: number): Promise<LancamentoData | undefined>;
   criarLancamento(dados: Omit<LancamentoData, 'id'>): Promise<number>;

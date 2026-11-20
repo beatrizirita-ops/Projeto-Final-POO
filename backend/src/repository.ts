@@ -99,6 +99,13 @@ export class PrismaFinanceiroRepository implements FinanceiroRepository {
     return conta.id;
   }
 
+  async atualizarSaldoConta(contaId: number, novoSaldo: number): Promise<void> {
+    await prisma.conta.update({
+      where: { id: contaId },
+      data: { saldo: novoSaldo },
+    });
+  }
+
   async listarLancamentos(usuarioId: number): Promise<LancamentoData[]> {
     const lancamentos = await prisma.lancamento.findMany({
       where: {
