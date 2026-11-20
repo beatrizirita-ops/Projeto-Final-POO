@@ -206,7 +206,7 @@ function Painel({ usuario, onSair }) {
                 <span className="badge">{c.tipo ?? 'CORRENTE'}</span>
               </div>
               <div style={{ marginTop: '6px', fontSize: '0.9rem' }}>
-                {c.tipo === 'CARTAO' ? `Disponível: ${moeda(c.saldo)}` : `Saldo: ${moeda(c.saldo)}`}
+                {c.tipo === 'CARTAO' ? `Disponível: ${brl(c.saldo)}` : `Saldo: ${brl(c.saldo)}`}
               </div>
               {c.tipo === 'POUPANCA' && (
                 <button type="button" className="sec" style={{ marginTop: '6px' }} onClick={() => action(() => api.renderPoupanca(c.id))}>
