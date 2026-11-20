@@ -75,3 +75,33 @@ export class ExportadorCsv implements ExportadorRelatorio {
     };
   }
 }
+
+// ===== Implementação Polimórfica 2: ExportadorJson =====
+export class ExportadorJson implements ExportadorRelatorio {
+  exportar(dados: DadosRelatorioMes): ConteudoExportado {
+    const payload = {
+      metadados: {
+        mes: dados.mes,
+        geradoEm: new Date().toISOString(),
+        formato: 'json',
+      },
+      resumo: {
+        entradas: dados.entradas,
+        saidas: dados.saidas,
+        resultado: dados.resultado,
+        previstoEntradas: dados.previstoEntradas,
+        previstoSaidas: dados.previstoSaidas,
+        totalSaidas: dados.totalSaidas,
+        saidasMesAnterior: dados.saidasMesAnterior,
+      },
+      porCategoria: dados.porCategoria,
+      maioresGastos: dados.maiores,
+    };
+
+    return {
+      conteudo: JSON.stringify(payload, null, 2),
+      mimeType: 'application/json;charset=utf-8',
+      extensao: 'json',
+    };
+  }
+}
