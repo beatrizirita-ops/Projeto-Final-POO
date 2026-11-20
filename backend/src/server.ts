@@ -1,6 +1,7 @@
 import { CATEGORIAS, GestorFinanceiro } from './dominio.ts';
 import { ServicoAuth } from './auth.ts';
 import { PrismaFinanceiroRepository, PrismaUsuarioRepository } from './repository.ts';
+import { criarExportador } from './exportadores.ts';
 
 // Injeção de dependência com Prisma ORM
 const repoFinanceiro = new PrismaFinanceiroRepository();
@@ -40,7 +41,20 @@ Deno.serve({ port: 3000 }, async (req) => {
     if (recurso === 'auth' && id === 'logout' && m === 'POST') { await auth.sair(token); return json({ ok: true }); }
 
     if (recurso === 'resumo' && m === 'GET') return json(await gestor.resumo(uid));
-    if (recurso === 'relatorio' && m === 'GET') return json(await gestor.relatorio(uid, url.searchParams.get('mes') ?? ''));
+    if (recurso === 'relatorio' && id === 'exportar' && m === 'GET') {
+      const mes = url.searchParams.get('mes') ?? '';
+      const formato = url.searchParams.get('formato') ?? 'csv';
+      const dados = await gestor.relatorio(uid, mes);
+      const arquivo = criarExportador(formato).exportar(dados);
+      return new Response(arquivo.conteudo, {
+        status: 200,
+        headers: {
+          'Content-Type': arquivo.mimeType,
+          'Content-Disposition': `attachment; filename="relatorio-${dados.mes}.${arquivo.extensao}"`,
+        },
+      });
+    }
+    if (recurso === 'relatorio' && !id && m === 'GET') return json(await gestor.relatorio(uid, url.searchParams.get('mes') ?? ''));
     if (recurso === 'categorias' && m === 'GET') return json(CATEGORIAS);
     if (recurso === 'orcamentos' && id && m === 'PUT') {
       await gestor.definirOrcamento(uid, decodeURIComponent(id), Number(corpo.limite));

@@ -1,8 +1,8 @@
 # Ticket 04: Abstração e Polimorfismo para Exportadores de Relatório
 
 - **Tipo**: `wayfinder:task`
-- **Status**: Bloqueado
-- **Bloqueado por**: Ticket 02 (Value Objects)
+- **Status**: [CONCLUÍDO]
+- **Bloqueado por**: Nenhum
 
 ---
 
@@ -42,7 +42,7 @@ Aplicar os conceitos de **Interface e Polimorfismo** criando um subsistema de ex
 ---
 
 ## 🏁 Critério de Aceite
-- [ ] Interface `ExportadorRelatorio` bem definida e documentada.
-- [ ] Pelo menos duas classes polimórficas (`ExportadorCsv` e `ExportadorJson`) implementando o mesmo método `exportar()`.
-- [ ] Endpoint no backend respondendo com os arquivos gerados de acordo com o parâmetro informado.
+- [x] Interface `ExportadorRelatorio` bem definida e documentada.
+- [x] Pelo menos duas classes polimórficas (`ExportadorCsv` e `ExportadorJson`) implementando o mesmo método `exportar()`.
+- [x] Endpoint no backend respondendo com os arquivos gerados de acordo com o parâmetro informado.
 
