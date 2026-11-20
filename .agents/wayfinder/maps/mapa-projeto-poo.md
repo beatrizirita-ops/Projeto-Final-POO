@@ -19,12 +19,13 @@ Transformar o backend do projeto Caixa em uma referência didática completa dos
 - [x] **Ticket 01 Concluído**: Integração do Prisma ORM com SQLite, schemas de Usuário, Sessão, Conta, Lançamento e Orçamento, e repositórios desacoplados (`PrismaUsuarioRepository` e `PrismaFinanceiroRepository`).
 - [x] **Ticket 02 Concluído**: Encapsulamento com Value Objects imutáveis (`Dinheiro` em centavos e `Vencimento` com datas seguras) aplicado em `Lancamento`, `Conta` e `GestorFinanceiro`.
 - [x] **Ticket 03 Concluído**: Hierarquia de contas bancárias com classe abstrata `ContaBancaria` e subclasses polimórficas `ContaCorrente`, `ContaPoupanca` (rendimento no dia 15) e `CartaoCredito` (limite e cashback).
+- [x] **Ticket 04 Concluído**: Subsistema de exportação de relatórios com interface `ExportadorRelatorio`, implementações polimórficas (`ExportadorCsv` e `ExportadorJson`) e rota `/relatorio/exportar`.
 
 ## Frontier (Abertos e Disponíveis para Execução)
-- [ ] [Ticket 04: Abstração e Polimorfismo para Exportadores de Relatório](tickets/ticket-04-interfaces-exportadores.md) — Interfaces de exportação (CSV, JSON).
+- [ ] [Ticket 05: Integração de Rotas e Atualização da Interface](tickets/ticket-05-rotas-e-frontend.md) — Exposição das novas contas e exportação no frontend.
 
 ## Blocked (Aguardando dependências da fronteira)
-- [ ] [Ticket 05: Integração de Rotas e Atualização da Interface](tickets/ticket-05-rotas-e-frontend.md) — *Aguardando Tickets 03 e 04*.
+*(Nenhum ticket bloqueado no momento)*
 
 ## Not yet specified
 - Mecanismo de fechamento e virada de fatura do Cartão de Crédito.
