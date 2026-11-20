@@ -105,3 +105,15 @@ export class ExportadorJson implements ExportadorRelatorio {
     };
   }
 }
+
+// ===== Factory Polimórfica de Exportadores =====
+export function criarExportador(formato: string): ExportadorRelatorio {
+  switch (formato.trim().toLowerCase()) {
+    case 'csv':
+      return new ExportadorCsv();
+    case 'json':
+      return new ExportadorJson();
+    default:
+      throw new Error('Formato de exportação inválido. Use "csv" ou "json".');
+  }
+}
